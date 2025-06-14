@@ -1,20 +1,31 @@
 import java.awt.BorderLayout
+import java.awt.Dimension
+import java.awt.Font
+import java.awt.GridLayout
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 
 class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel): JPanel(BorderLayout()) {
-    private val calculateButton = JButton("Calculate!")
+    private val calculateButton = JButton("Calculate!").apply {
+        font = Font("Segoe UI", 0, 18)
+        preferredSize = Dimension(150, 35)
+    }
     private val resultLabel = JLabel().apply {
-        font = font.deriveFont(18f)
+        font = Font("Segoe UI", 0, 18)
         horizontalAlignment = JLabel.CENTER
         verticalAlignment = JLabel.CENTER
     }
 
     init {
-        this.add(leftPanel, BorderLayout.WEST)
-        this.add(rightPanel, BorderLayout.EAST)
-        this.add(calculateButton, BorderLayout.SOUTH)
+        val centerPanel = JPanel(GridLayout(1, 2))
+        centerPanel.add(leftPanel)
+        centerPanel.add(rightPanel)
+        this.add(centerPanel, BorderLayout.CENTER)
+        this.add(JPanel().apply {
+            layout = java.awt.FlowLayout(java.awt.FlowLayout.CENTER)
+            add(calculateButton)
+        }, BorderLayout.SOUTH)
         this.add(resultLabel, BorderLayout.NORTH)
         calculateButton.addActionListener {
             calculateButton.isEnabled = false

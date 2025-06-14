@@ -105,7 +105,7 @@ object TetraRating {
     ): Double {
         val scale = 173.7178
         val piSquared = PI * PI
-        val epsilon = 1e-6
+        val epsilon = 1e-10
 
         // step 1: convert ratings and rd to glicko-2 scale
         val mu = (rBefore - 1500.0) / scale

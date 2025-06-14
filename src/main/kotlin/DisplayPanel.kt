@@ -9,8 +9,11 @@ import javax.swing.*
 class DisplayPanel : JPanel(GridBagLayout()) {
     private val nameField = JTextField("iika", 15)
     private val nameLabel = JLabel("iika").apply { setLabelSettings(this) }
-
-    private val imageLabel = JLabel().apply { setLabelSettings(this) }
+    private val imageLabel = JLabel().apply {
+        setLabelSettings(this)
+        border = BorderFactory.createLineBorder(Color.BLACK, 2)
+        preferredSize = Dimension(250, 250)
+    }
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
     private val glicko = JLabel("GLICKO±RD").apply { setLabelSettings(this) }
     private val wins = JLabel("WINS").apply { setLabelSettings(this) }
@@ -20,8 +23,11 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         val constraints = GridBagConstraints().apply {
             gridx = 0
             gridy = GridBagConstraints.RELATIVE
+            anchor = GridBagConstraints.CENTER
+            fill = GridBagConstraints.NONE
             insets.set(10, 10, 10, 10)
-            fill = GridBagConstraints.BOTH
+            weightx = 1.0
+            weighty = 1.0
         }
 
         add(nameField, constraints)
@@ -43,7 +49,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     }
 
     private fun setLabelSettings(label: JLabel) {
-        label.font = label.font.deriveFont(20f)
+        label.font = Font("Segoe UI", 0, 20)
         label.horizontalAlignment = JLabel.CENTER
         label.verticalAlignment = JLabel.CENTER
     }
@@ -59,8 +65,8 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             ).getJSONObject("data")
 
             tr.text = "TR: ${leagueData.getDouble("tr")}"
-            glicko.text = "GLICKO: ${leagueData.getDouble("glicko")} ± ${leagueData.getDouble("rd")}"
-            wins.text = "WINS: ${leagueData.getInt("gameswon")}"
+            glicko.text = "Glicko: ${leagueData.getDouble("glicko")} ± ${leagueData.getDouble("rd")}"
+            wins.text = "Wins: ${leagueData.getInt("gameswon")}"
 
             val gameData = JSONObject(
                 Jsoup.connect("https://ch.tetr.io/api/users/$name/records/league/recent?limit=5")
@@ -87,51 +93,59 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val player1Stats = league.getJSONArray(player1Id)
             val player2Stats = league.getJSONArray(player2Id)
 
-            val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
-            val player1rd = player1Stats.getJSONObject(0).getDouble("rd")
+            val sigmaValue: Double
 
-            val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
-            val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
+            imageLabel.icon = getAvatar(name)
 
-            // determine if player1 won (based on id matc)
-            val result = firstEntry.getJSONObject("extras").getString("result")
-            val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
-            val win = if (winnerId == player1Id) 1.0 else 0.0
-
-            val sigmaValue = TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win)
-            sigma.text = "VOLATILITY: $sigmaValue"
-
-            // avatar
-            val userInfo = JSONObject(
-                Jsoup.connect("https://ch.tetr.io/api/users/$name")
-                    .ignoreContentType(true)
-                    .execute()
-                    .body()
-            ).getJSONObject("data")
-
-            val userId = userInfo.getString("_id")
-            var avatarUrl: String
             try {
-                val avatarRevision = userInfo.getLong("avatar_revision")
-                if (avatarRevision == 0.toLong()) throw FileNotFoundException()
-                avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
-            } catch (e: Exception) {
-                avatarUrl = "https://files.catbox.moe/w43hs8.png"
+                val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
+                val player1rd = player1Stats.getJSONObject(0).getDouble("rd")
+
+                val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
+                val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
+
+                // determine if player1 won (based on id match)
+                val result = firstEntry.getJSONObject("extras").getString("result")
+                val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
+                val win = if (winnerId == player1Id) 1.0 else 0.0
+
+                sigmaValue = TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win)
+                sigma.text = "Volatility: $sigmaValue"
+            } catch(e: Exception) {
+                sigma.text = "Volatility: 0.06"
             }
 
-
-            val image = ImageIO.read(URI.create(avatarUrl).toURL())
-            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
-            imageLabel.icon = ImageIcon(scaled)
-
         } catch (e: Exception) {
-            e.printStackTrace()
-            tr.text = "TR: ?"
-            glicko.text = "GLICKO: ?"
-            wins.text = "WINS: ?"
-            sigma.text = "VOLATILITY: ?"
-            imageLabel.icon = null
+            tr.text = "TR: -1.0"
+            glicko.text = "Glicko: -1.0 ± -1.0"
+            wins.text = "Wins: -1.0"
+            sigma.text = "Volatility: -1.0"
+            imageLabel.icon = getAvatar(name)
         }
+    }
+
+    private fun getAvatar(name: String): ImageIcon {
+        val userInfo = JSONObject(
+            Jsoup.connect("https://ch.tetr.io/api/users/$name")
+                .ignoreContentType(true)
+                .execute()
+                .body()
+        ).getJSONObject("data")
+
+        val userId = userInfo.getString("_id")
+        var avatarUrl: String
+        try {
+            val avatarRevision = userInfo.getLong("avatar_revision")
+            if (avatarRevision == 0.toLong()) throw FileNotFoundException()
+            avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
+        } catch (e: Exception) {
+            avatarUrl = "https://files.catbox.moe/w43hs8.png"
+        }
+
+
+        val image = ImageIO.read(URI.create(avatarUrl).toURL())
+        val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
+        return ImageIcon(scaled)
     }
 
     fun getPlayerName() = nameLabel.text!!
