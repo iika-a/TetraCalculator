@@ -10,7 +10,9 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val nameField = JTextField("iika", 15).apply {
         horizontalAlignment = JTextField.CENTER
         font = font.deriveFont(20f)
+        preferredSize = Dimension(10, 35)
     }
+
     private val imageLabel = JLabel().apply {
         setLabelSettings(this)
         border = BorderFactory.createLineBorder(Color(0x313335), 3)
@@ -32,21 +34,6 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             weightx = 1.0
             weighty = 1.0
         }
-
-        nameField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
-            override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
-            override fun removeUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
-            override fun changedUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
-
-            fun resizeToText() {
-                val fm = nameField.getFontMetrics(nameField.font)
-                val text = nameField.text
-                val width = fm.stringWidth(text.ifEmpty { " " }) + 20 // Add padding
-                val height = nameField.preferredSize.height
-                nameField.preferredSize = Dimension(width, height)
-                nameField.revalidate()
-            }
-        })
 
         add(nameField, constraints)
         add(imageLabel, constraints)
@@ -158,7 +145,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
                 if (avatarRevision == 0.toLong()) throw FileNotFoundException()
                 avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
             } catch (e: Exception) {
-                avatarUrl = "https://files.catbox.moe/w43hs8.png"
+                avatarUrl = "https://files.catbox.moe/wjbfg5.png"
             }
 
 
@@ -166,7 +153,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
             return ImageIcon(scaled)
         } catch(e: Exception) {
-            val image = ImageIO.read(URI.create("https://files.catbox.moe/wwmlzn.png").toURL())
+            val image = ImageIO.read(URI.create("https://files.catbox.moe/3dpdh6.png").toURL())
             val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
             return ImageIcon(scaled)
         }
