@@ -1,29 +1,28 @@
-import java.awt.BorderLayout
-import java.awt.Dimension
-import java.awt.Font
-import java.awt.GridLayout
+import java.awt.*
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
 
 class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel): JPanel(BorderLayout()) {
     private val calculateButton = JButton("Calculate!").apply {
-        font = Font("Segoe UI", 0, 18)
+        font = Font("Dubai", 0, 20)
         preferredSize = Dimension(150, 35)
     }
     private val resultLabel = JLabel().apply {
-        font = Font("Segoe UI", 0, 18)
+        font = Font("Dubai", 0, 20)
         horizontalAlignment = JLabel.CENTER
         verticalAlignment = JLabel.CENTER
+        foreground = Color(0xBBBBBB)
     }
 
     init {
+        background = Color(0x3d4042)
         val centerPanel = JPanel(GridLayout(1, 2))
         centerPanel.add(leftPanel)
         centerPanel.add(rightPanel)
         this.add(centerPanel, BorderLayout.CENTER)
         this.add(JPanel().apply {
-            layout = java.awt.FlowLayout(java.awt.FlowLayout.CENTER)
+            background = Color(0x3d4042)
             add(calculateButton)
         }, BorderLayout.SOUTH)
         this.add(resultLabel, BorderLayout.NORTH)

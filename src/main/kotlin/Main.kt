@@ -1,5 +1,8 @@
+import com.formdev.flatlaf.FlatDarkLaf
 import javax.swing.BorderFactory
 import javax.swing.JFrame
+import javax.swing.UIManager
+import javax.swing.UnsupportedLookAndFeelException
 
 fun main() {
     val frame = JFrame("Tetra Calculator")
@@ -7,6 +10,13 @@ fun main() {
     frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
     frame.isResizable = false
     frame.setLocationRelativeTo(null)
+
+    try {
+        UIManager.setLookAndFeel(FlatDarkLaf())
+    } catch (e: UnsupportedLookAndFeelException) {
+        e.printStackTrace()
+        System.err.println("Failed to initialize FlatLaf.")
+    }
 
     val leftPanel = DisplayPanel()
     val rightPanel = DisplayPanel()

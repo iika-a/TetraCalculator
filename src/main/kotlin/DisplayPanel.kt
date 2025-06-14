@@ -7,11 +7,13 @@ import javax.imageio.ImageIO
 import javax.swing.*
 
 class DisplayPanel : JPanel(GridBagLayout()) {
-    private val nameField = JTextField("iika", 15)
-    private val nameLabel = JLabel("iika").apply { setLabelSettings(this) }
+    private val nameField = JTextField("iika", 15).apply {
+        horizontalAlignment = JTextField.CENTER
+        font = font.deriveFont(20f)
+    }
     private val imageLabel = JLabel().apply {
         setLabelSettings(this)
-        border = BorderFactory.createLineBorder(Color.BLACK, 2)
+        border = BorderFactory.createLineBorder(Color(0x313335), 3)
         preferredSize = Dimension(250, 250)
     }
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
@@ -20,6 +22,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val sigma = JLabel("VOLATILITY").apply { setLabelSettings(this) }
 
     init {
+        background = Color(0x3d4042)
         val constraints = GridBagConstraints().apply {
             gridx = 0
             gridy = GridBagConstraints.RELATIVE
@@ -30,8 +33,22 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             weighty = 1.0
         }
 
+        nameField.document.addDocumentListener(object : javax.swing.event.DocumentListener {
+            override fun insertUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
+            override fun removeUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
+            override fun changedUpdate(e: javax.swing.event.DocumentEvent?) = resizeToText()
+
+            fun resizeToText() {
+                val fm = nameField.getFontMetrics(nameField.font)
+                val text = nameField.text
+                val width = fm.stringWidth(text.ifEmpty { " " }) + 20 // Add padding
+                val height = nameField.preferredSize.height
+                nameField.preferredSize = Dimension(width, height)
+                nameField.revalidate()
+            }
+        })
+
         add(nameField, constraints)
-        add(nameLabel, constraints)
         add(imageLabel, constraints)
         add(tr, constraints)
         add(glicko, constraints)
@@ -40,7 +57,6 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
         nameField.addActionListener {
             val name = nameField.text.lowercase()
-            nameLabel.text = name
             getStats(name)
         }
 
@@ -49,9 +65,11 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     }
 
     private fun setLabelSettings(label: JLabel) {
-        label.font = Font("Segoe UI", 0, 20)
+        label.font = Font("Dubai", 0, 20)
         label.horizontalAlignment = JLabel.CENTER
         label.verticalAlignment = JLabel.CENTER
+        label.foreground = Color(0xBBBBBB)
+        label.preferredSize = Dimension(500, 25)
     }
 
     private fun getStats(name: String) {
@@ -125,30 +143,36 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     }
 
     private fun getAvatar(name: String): ImageIcon {
-        val userInfo = JSONObject(
-            Jsoup.connect("https://ch.tetr.io/api/users/$name")
-                .ignoreContentType(true)
-                .execute()
-                .body()
-        ).getJSONObject("data")
-
-        val userId = userInfo.getString("_id")
-        var avatarUrl: String
         try {
-            val avatarRevision = userInfo.getLong("avatar_revision")
-            if (avatarRevision == 0.toLong()) throw FileNotFoundException()
-            avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
-        } catch (e: Exception) {
-            avatarUrl = "https://files.catbox.moe/w43hs8.png"
+            val userInfo = JSONObject(
+                Jsoup.connect("https://ch.tetr.io/api/users/$name")
+                    .ignoreContentType(true)
+                    .execute()
+                    .body()
+            ).getJSONObject("data")
+
+            val userId = userInfo.getString("_id")
+            var avatarUrl: String
+            try {
+                val avatarRevision = userInfo.getLong("avatar_revision")
+                if (avatarRevision == 0.toLong()) throw FileNotFoundException()
+                avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
+            } catch (e: Exception) {
+                avatarUrl = "https://files.catbox.moe/w43hs8.png"
+            }
+
+
+            val image = ImageIO.read(URI.create(avatarUrl).toURL())
+            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
+            return ImageIcon(scaled)
+        } catch(e: Exception) {
+            val image = ImageIO.read(URI.create("https://files.catbox.moe/wwmlzn.png").toURL())
+            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
+            return ImageIcon(scaled)
         }
-
-
-        val image = ImageIO.read(URI.create(avatarUrl).toURL())
-        val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
-        return ImageIcon(scaled)
     }
 
-    fun getPlayerName() = nameLabel.text!!
+    fun getPlayerName() = nameField.text.lowercase()
     @Suppress("unused")
     fun getTR() = tr.text.substring(4).toDouble()
     fun getGlicko() = glicko.text.substring(8).split(" ± ")[0].toDouble()
