@@ -11,6 +11,7 @@ repositories {
 
 dependencies {
     implementation("org.jsoup:jsoup:1.20.1")
+    implementation("org.json:json:20250517")
 }
 
 tasks.test {
