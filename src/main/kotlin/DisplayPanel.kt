@@ -1,14 +1,9 @@
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.awt.*
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.net.URI
-import java.net.URL
 import javax.imageio.ImageIO
 import javax.swing.*
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 class DisplayPanel : JPanel(GridBagLayout()) {
     private val nameField = JTextField("iika", 15)
@@ -18,9 +13,6 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
     private val glicko = JLabel("GLICKO±RD").apply { setLabelSettings(this) }
     private val wins = JLabel("WINS").apply { setLabelSettings(this) }
-
-    // Trigger stat update on Enter press
-    private var updateTimer: Timer? = null
 
     init {
         val constraints = GridBagConstraints().apply {
@@ -37,23 +29,13 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         add(glicko, constraints)
         add(wins, constraints)
 
-        nameField.document.addDocumentListener(object : DocumentListener {
-            override fun insertUpdate(e: DocumentEvent?) = scheduleUpdate()
-            override fun removeUpdate(e: DocumentEvent?) = scheduleUpdate()
-            override fun changedUpdate(e: DocumentEvent?) = scheduleUpdate()
-
-            fun scheduleUpdate() {
-                updateTimer?.stop()
-                updateTimer = Timer(500) {
-                    val name = nameField.text.trim()
-                    nameLabel.text = name
-                    getStats(name)
-                }.apply { isRepeats = false; start() }
-            }
-        })
+        nameField.addActionListener {
+            val name = nameField.text.trim()
+            nameLabel.text = name
+            getStats(name)
+        }
 
         // Do initial load
-        println(nameField.text.trim())
         getStats(nameField.text.trim())
     }
 
@@ -86,12 +68,17 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             ).getJSONObject("data")
 
             val userId = userInfo.getString("_id")
-            val avatarRevision = userInfo.getLong("avatar_revision")
-            val avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
-            println("Avatar URL: $avatarUrl")
+            var avatarUrl: String
+            try {
+                val avatarRevision = userInfo.getLong("avatar_revision")
+                avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
+            } catch (e: Exception) {
+                avatarUrl = "https://files.catbox.moe/w43hs8.png"
+            }
+
 
             val image = ImageIO.read(URI.create(avatarUrl).toURL())
-            val scaled = image.getScaledInstance(200, 200, Image.SCALE_SMOOTH)
+            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
             imageLabel.icon = ImageIcon(scaled)
 
         } catch (e: Exception) {
@@ -102,4 +89,11 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             imageLabel.icon = null
         }
     }
+
+    fun getPlayerName() = nameLabel.text!!
+    @Suppress("unused")
+    fun getTR() = tr.text.substring(4).toDouble()
+    fun getGlicko() = glicko.text.substring(8).split(" ± ")[0].toDouble()
+    fun getRD() = glicko.text.substring(8).split(" ± ")[1].toDouble()
+    fun getWins() = wins.text.substring(6).toInt()
 }
