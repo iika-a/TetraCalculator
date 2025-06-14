@@ -159,6 +159,5 @@ object TetraRating {
         return numerator / denominator - (x - a) / (tau * tau)
     }
 
-
     private infix fun Double.powTo(exponent: Double): Double = pow(exponent)
 }

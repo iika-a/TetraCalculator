@@ -1,6 +1,7 @@
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.awt.*
+import java.io.FileNotFoundException
 import java.net.URI
 import javax.imageio.ImageIO
 import javax.swing.*
@@ -32,13 +33,13 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         add(sigma, constraints)
 
         nameField.addActionListener {
-            val name = nameField.text.trim()
+            val name = nameField.text.lowercase()
             nameLabel.text = name
             getStats(name)
         }
 
         // do initial load
-        getStats(nameField.text.trim())
+        getStats(nameField.text.lowercase())
     }
 
     private fun setLabelSettings(label: JLabel) {
@@ -112,6 +113,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             var avatarUrl: String
             try {
                 val avatarRevision = userInfo.getLong("avatar_revision")
+                if (avatarRevision == 0.toLong()) throw FileNotFoundException()
                 avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
             } catch (e: Exception) {
                 avatarUrl = "https://files.catbox.moe/w43hs8.png"
