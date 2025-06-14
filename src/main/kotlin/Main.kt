@@ -1,5 +1,3 @@
-import org.json.JSONObject
-import org.jsoup.Jsoup
 import javax.swing.BorderFactory
 import javax.swing.JFrame
 

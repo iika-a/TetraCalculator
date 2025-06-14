@@ -13,6 +13,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
     private val glicko = JLabel("GLICKO±RD").apply { setLabelSettings(this) }
     private val wins = JLabel("WINS").apply { setLabelSettings(this) }
+    private val sigma = JLabel("VOLATILITY").apply { setLabelSettings(this) }
 
     init {
         val constraints = GridBagConstraints().apply {
@@ -28,6 +29,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         add(tr, constraints)
         add(glicko, constraints)
         add(wins, constraints)
+        add(sigma, constraints)
 
         nameField.addActionListener {
             val name = nameField.text.trim()
@@ -59,6 +61,46 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             glicko.text = "GLICKO: ${leagueData.getDouble("glicko")} ± ${leagueData.getDouble("rd")}"
             wins.text = "WINS: ${leagueData.getInt("gameswon")}"
 
+            val gameData = JSONObject(
+                Jsoup.connect("https://ch.tetr.io/api/users/$name/records/league/recent?limit=5")
+                    .ignoreContentType(true)
+                    .execute()
+                    .body()
+            ).getJSONObject("data")
+
+            val entries = gameData.getJSONArray("entries")
+            val firstEntry = entries.getJSONObject(0)
+
+            val leaderboard = firstEntry.getJSONObject("results").getJSONArray("leaderboard")
+
+// Dynamically get usernames and IDs
+            val player1Obj = leaderboard.getJSONObject(0)
+            val player2Obj = leaderboard.getJSONObject(1)
+
+
+            val player1Id = player1Obj.getString("id")
+            val player2Id = player2Obj.getString("id")
+
+            val league = firstEntry.getJSONObject("extras").getJSONObject("league")
+
+            val player1Stats = league.getJSONArray(player1Id)
+            val player2Stats = league.getJSONArray(player2Id)
+
+            val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
+            val player1rd = player1Stats.getJSONObject(0).getDouble("rd")
+
+            val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
+            val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
+
+// Determine if player1 won (based on ID match with dqvictory/victory side)
+            val result = firstEntry.getJSONObject("extras").getString("result")
+            val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
+            val win = if (winnerId == player1Id) 1.0 else 0.0
+
+// Output (you now have 6 variables)
+            val sigmaValue = TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win)
+            sigma.text = "VOLATILITY: $sigmaValue"
+
             // Avatar
             val userInfo = JSONObject(
                 Jsoup.connect("https://ch.tetr.io/api/users/$name")
@@ -86,6 +128,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             tr.text = "TR: ?"
             glicko.text = "GLICKO: ?"
             wins.text = "WINS: ?"
+            sigma.text = "VOLATILITY: ?"
             imageLabel.icon = null
         }
     }
@@ -96,4 +139,5 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     fun getGlicko() = glicko.text.substring(8).split(" ± ")[0].toDouble()
     fun getRD() = glicko.text.substring(8).split(" ± ")[1].toDouble()
     fun getWins() = wins.text.substring(6).toInt()
+    fun getSigma() = sigma.text.substring(12).toDouble()
 }

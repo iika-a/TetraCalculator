@@ -30,20 +30,22 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
 
     private fun calculate() {
         val yourName = leftPanel.getPlayerName()
-        val theirName = rightPanel.getPlayerName()
         val yourGlicko = leftPanel.getGlicko()
         val yourRD = leftPanel.getRD()
+        val yourSigma = leftPanel.getSigma()
+        val theirName = rightPanel.getPlayerName()
         val theirGlicko = rightPanel.getGlicko()
         val theirRD = rightPanel.getRD()
+        val theirSigma = rightPanel.getSigma()
 
         if (yourGlicko != -1.0 && theirGlicko != -1.0) {
-            val yourStatsIfWin = TetraRating.glickoUpdate(yourGlicko, yourRD, theirGlicko, theirRD, 1)
-            val yourStatsIfLoss = TetraRating.glickoUpdate(yourGlicko, yourRD, theirGlicko, theirRD, 0)
+            val yourStatsIfWin = TetraRating.glicko2Update(yourGlicko, yourRD, theirGlicko, theirRD, 1.0, yourSigma)
+            val yourStatsIfLoss = TetraRating.glicko2Update(yourGlicko, yourRD, theirGlicko, theirRD, 0.0, yourSigma)
             val yourTRIfWin = TetraRating.calculateTR(yourStatsIfWin.first, yourStatsIfWin.second, leftPanel.getWins() + 1)
             val yourTRIfLoss = TetraRating.calculateTR(yourStatsIfLoss.first, yourStatsIfLoss.second, leftPanel.getWins())
 
-            val theirStatsIfWin = TetraRating.glickoUpdate(theirGlicko, theirRD, yourGlicko, yourRD, 1)
-            val theirStatsIfLoss = TetraRating.glickoUpdate(theirGlicko, theirRD, yourGlicko, yourRD, 0)
+            val theirStatsIfWin = TetraRating.glicko2Update(theirGlicko, theirRD, yourGlicko, yourRD, 1.0, theirSigma)
+            val theirStatsIfLoss = TetraRating.glicko2Update(theirGlicko, theirRD, yourGlicko, yourRD, 0.0, theirSigma)
             val theirTRIfWin = TetraRating.calculateTR(theirStatsIfWin.first, theirStatsIfWin.second, rightPanel.getWins() + 1)
             val theirTRIfLoss = TetraRating.calculateTR(theirStatsIfLoss.first, theirStatsIfLoss.second, rightPanel.getWins())
 
