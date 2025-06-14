@@ -37,6 +37,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             getStats(name)
         }
 
+        // do initial load
         getStats(nameField.text.trim())
     }
 
@@ -48,6 +49,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private fun getStats(name: String) {
         try {
+            // league stats
             val leagueData = JSONObject(
                 Jsoup.connect("https://ch.tetr.io/api/users/$name/summaries/league")
                     .ignoreContentType(true)
@@ -71,6 +73,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
             val leaderboard = firstEntry.getJSONObject("results").getJSONArray("leaderboard")
 
+            // get usernames and ids
             val player1Obj = leaderboard.getJSONObject(0)
             val player2Obj = leaderboard.getJSONObject(1)
 
@@ -89,6 +92,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
             val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
 
+            // determine if player1 won (based on id matc)
             val result = firstEntry.getJSONObject("extras").getString("result")
             val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
             val win = if (winnerId == player1Id) 1.0 else 0.0
@@ -96,6 +100,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val sigmaValue = TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win)
             sigma.text = "VOLATILITY: $sigmaValue"
 
+            // avatar
             val userInfo = JSONObject(
                 Jsoup.connect("https://ch.tetr.io/api/users/$name")
                     .ignoreContentType(true)
