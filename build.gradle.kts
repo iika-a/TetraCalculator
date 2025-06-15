@@ -19,5 +19,27 @@ tasks.test {
     useJUnitPlatform()
 }
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(8)
+}
+
+tasks.register<Jar>("fatJar") {
+    group = "build"
+    archiveClassifier.set("all")
+
+    manifest {
+        attributes["Main-Class"] = "MainKt"
+    }
+
+    from(sourceSets.main.get().output)
+
+    dependsOn(configurations.runtimeClasspath)
+
+    // FIX: avoid crashing on duplicate files in dependencies
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    from({
+        configurations.runtimeClasspath.get()
+            .filter { it.name.endsWith("jar") }
+            .map { zipTree(it) }
+    })
 }

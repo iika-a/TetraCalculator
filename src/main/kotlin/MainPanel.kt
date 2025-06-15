@@ -16,24 +16,18 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
     }
 
     init {
-        background = Color(0x3d4042)
+        background = Color(0x44484A)
+
         val centerPanel = JPanel(GridLayout(1, 2))
         centerPanel.add(leftPanel)
         centerPanel.add(rightPanel)
         this.add(centerPanel, BorderLayout.CENTER)
         this.add(JPanel().apply {
-            background = Color(0x3d4042)
+            background = Color(0x44484A)
             add(calculateButton)
         }, BorderLayout.SOUTH)
         this.add(resultLabel, BorderLayout.NORTH)
         calculateButton.addActionListener {
-            calculateButton.isEnabled = false
-
-            javax.swing.Timer(5000) {
-                calculateButton.isEnabled = true
-                (it.source as javax.swing.Timer).stop()
-            }.start()
-
             calculate()
         }
     }

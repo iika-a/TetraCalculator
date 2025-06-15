@@ -7,7 +7,7 @@ import javax.imageio.ImageIO
 import javax.swing.*
 
 class DisplayPanel : JPanel(GridBagLayout()) {
-    private val nameField = JTextField("iika", 15).apply {
+    private val nameField = JTextField("", 15).apply {
         horizontalAlignment = JTextField.CENTER
         font = font.deriveFont(20f)
         preferredSize = Dimension(10, 35)
@@ -24,7 +24,8 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val sigma = JLabel("VOLATILITY").apply { setLabelSettings(this) }
 
     init {
-        background = Color(0x3d4042)
+        background = Color(0x44484A)
+
         val constraints = GridBagConstraints().apply {
             gridx = 0
             gridy = GridBagConstraints.RELATIVE
@@ -139,22 +140,29 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             ).getJSONObject("data")
 
             val userId = userInfo.getString("_id")
-            var avatarUrl: String
-            try {
+
+            val avatarUrl = try {
                 val avatarRevision = userInfo.getLong("avatar_revision")
-                if (avatarRevision == 0.toLong()) throw FileNotFoundException()
-                avatarUrl = "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
+                if (avatarRevision == 0L) throw FileNotFoundException()
+                "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
             } catch (e: Exception) {
-                avatarUrl = "https://files.catbox.moe/wjbfg5.png"
+                "https://files.catbox.moe/wjbfg5.png"
             }
 
+            val url = URI.create(avatarUrl).toURL()
+            val connection = url.openConnection().apply {
+                setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                setRequestProperty("Referer", "https://tetr.io/")
+            }
 
-            val image = ImageIO.read(URI.create(avatarUrl).toURL())
+            connection.connect()
+            val image = ImageIO.read(connection.getInputStream())
             val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
             return ImageIcon(scaled)
-        } catch(e: Exception) {
-            val image = ImageIO.read(URI.create("https://files.catbox.moe/3dpdh6.png").toURL())
-            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
+
+        } catch (e: Exception) {
+            val fallback = ImageIO.read(URI.create("https://files.catbox.moe/3dpdh6.png").toURL())
+            val scaled = fallback.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
             return ImageIcon(scaled)
         }
     }
