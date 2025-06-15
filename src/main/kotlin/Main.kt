@@ -19,7 +19,7 @@ fun main() {
     frame.setLocationRelativeTo(null)
 
     val loadingFrame = JFrame("Tetra Calculator...")
-    loadingFrame.setSize(300, 150)
+    loadingFrame.setSize(250, 125)
     loadingFrame.add(JPanel().apply {
         add(JLabel("Loading...").apply {
             font = Font("Dubai", 0, 20)
