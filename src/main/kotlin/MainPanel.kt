@@ -1,4 +1,6 @@
 import java.awt.*
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import javax.swing.JButton
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -84,8 +86,8 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         val rightPlayerIfWin = TetraPlayer(right.name, rightTRIfWin, rightStatsIfWin.first, rightStatsIfWin.second, right.wins + 1, rightStatsIfWin.third)
         val rightPlayerIfLoss = TetraPlayer(right.name, rightTRIfLoss, rightStatsIfLoss.first, rightStatsIfLoss.second, right.wins, rightStatsIfLoss.third)
 
-        val leftOutputPanel = OutputPanel(leftPlayerIfWin, leftPlayerIfLoss)
-        val rightOutputPanel = OutputPanel(rightPlayerIfWin, rightPlayerIfLoss)
+        val leftOutputPanel = OutputPanel(leftPlayerIfWin, leftPlayerIfLoss, left)
+        val rightOutputPanel = OutputPanel(rightPlayerIfWin, rightPlayerIfLoss, right)
 
         val outputFrame = JFrame("Tetra Calculation")
         outputFrame.setSize(1280, 720)
@@ -93,6 +95,12 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         outputFrame.isResizable = false
         outputFrame.setLocationRelativeTo(null)
         TetraCalculatorHelper.setIcons(outputFrame)
+        outputFrame.addWindowListener(object : WindowAdapter() {
+            override fun windowClosing(e: WindowEvent?) {
+                leftPanel.refresh()
+                rightPanel.refresh()
+            }
+        })
 
         val outputCenterPanel = JPanel(BorderLayout()).apply {
             add(JPanel(GridLayout(1, 2)).apply {
@@ -106,9 +114,9 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
                     font = Font("Dubai", 0, 20)
                     preferredSize = Dimension(150, 35)
                     addActionListener {
-                        outputFrame.dispose()
                         leftPanel.refresh()
                         rightPanel.refresh()
+                        outputFrame.dispose()
                     }
                 })
             }, BorderLayout.SOUTH)

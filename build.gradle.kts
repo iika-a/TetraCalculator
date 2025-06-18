@@ -10,9 +10,9 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jsoup:jsoup:1.20.1")
     implementation("org.json:json:20250517")
     implementation("com.formdev:flatlaf:3.5.4")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
 
 tasks.test {

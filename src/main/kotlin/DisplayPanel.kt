@@ -1,12 +1,15 @@
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.json.JSONObject
-import org.jsoup.Jsoup
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.FileNotFoundException
 import javax.swing.*
 
 class DisplayPanel : JPanel(GridBagLayout()) {
+    private val client = OkHttpClient()
     private val nameField = JTextField("", 15).apply {
         horizontalAlignment = JTextField.CENTER
         font = font.deriveFont(20f)
@@ -76,23 +79,13 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
         try {
             // league stats
-            val leagueData = JSONObject(
-                Jsoup.connect("https://ch.tetr.io/api/users/$name/summaries/league")
-                    .ignoreContentType(true)
-                    .execute()
-                    .body()
-            ).getJSONObject("data")
+            val leagueData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/summaries/league")
 
             updateTR(leagueData.getDouble("tr"))
             updateGlicko(leagueData.getDouble("glicko"), leagueData.getDouble("rd"))
             updateWins(leagueData.getInt("gameswon"))
 
-            val gameData = JSONObject(
-                Jsoup.connect("https://ch.tetr.io/api/users/$name/records/league/recent?limit=5")
-                    .ignoreContentType(true)
-                    .execute()
-                    .body()
-            ).getJSONObject("data")
+            val gameData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/records/league/recent?limit=1")
 
             val entries = gameData.getJSONArray("entries")
             val firstEntry = entries.getJSONObject(0)
@@ -112,7 +105,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val player1Stats = league.getJSONArray(player1Id)
             val player2Stats = league.getJSONArray(player2Id)
 
-            imageLabel.icon = TetraPlayer.getAvatar(name, 250)
+            imageLabel.icon = TetraCalculatorHelper.getAvatar(name, 250)
 
             try {
                 val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
@@ -132,12 +125,25 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             }
 
         } catch (e: Exception) {
+            e.printStackTrace()
             updateTR(-1.0)
             updateGlicko(-1.0, -1.0)
             updateWins(-1)
             updateSigma(-1.0)
-            imageLabel.icon = TetraPlayer.getAvatar(name, 250)
+            imageLabel.icon = TetraCalculatorHelper.getAvatar(name, 250)
         }
+    }
+
+    private fun fetchTetrioJson(url: String): JSONObject {
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+            .header("Referer", "https://tetr.io/")
+            .build()
+
+        val response = client.newCall(request).execute()
+        val jsonText = response.body?.string() ?: throw FileNotFoundException()
+        return JSONObject(jsonText).getJSONObject("data")
     }
 
     private fun doInitialLoad() {
@@ -145,7 +151,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         updateGlicko(-1.0, -1.0)
         updateWins(-1)
         updateSigma(-1.0)
-        imageLabel.icon = TetraPlayer.getAvatar("", 250)
+        imageLabel.icon = TetraCalculatorHelper.getAvatar("", 250)
     }
 
     private fun updateName(newName: String) {
