@@ -85,10 +85,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             updateGlicko(leagueData.getDouble("glicko"), leagueData.getDouble("rd"))
             updateWins(leagueData.getInt("gameswon"))
 
-            val gameData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/records/league/recent?limit=1")
+            val gameData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/records/league/recent?limit=2")
 
             val entries = gameData.getJSONArray("entries")
-            val firstEntry = entries.getJSONObject(0)
+            val firstEntry = entries.getJSONObject(1)
 
             val leaderboard = firstEntry.getJSONObject("results").getJSONArray("leaderboard")
 
@@ -96,9 +96,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val player1Obj = leaderboard.getJSONObject(0)
             val player2Obj = leaderboard.getJSONObject(1)
 
-
             val player1Id = player1Obj.getString("id")
             val player2Id = player2Obj.getString("id")
+
+            val userId = if(player1Obj.getString("username") == name) player1Id else player2Id
 
             val league = firstEntry.getJSONObject("extras").getJSONObject("league")
 
@@ -114,12 +115,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
                 val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
                 val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
 
-                // determine if player1 won (based on id match)
-                val result = firstEntry.getJSONObject("extras").getString("result")
-                val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
-                val win = if (winnerId == player1Id) 1.0 else 0.0
+                val win = if (player1Id == userId) 1.0 else 0.0
 
-                updateSigma(TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win))
+                if (win == 1.0) updateSigma(TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win))
+                else updateSigma(TetraRating.estimateSigmaAfterMatch(player2before, player2rd, player1before, player1rd, win))
                 TetraCalculatorHelper.inaccurate = false
             } catch(e: Exception) {
                 updateSigma(0.06)
