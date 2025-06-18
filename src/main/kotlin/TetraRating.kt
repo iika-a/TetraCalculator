@@ -9,7 +9,7 @@ object TetraRating {
         rdOp: Double,    // opponent RD
         result: Double,   // 1.0 = win, 0.5 = draw, 0.0 = loss
         sigma: Double
-    ): Pair<Double, Double> {
+    ): Triple<Double, Double, Double> {
         val scale = 173.7178
         val tau = 0.5
         val piSq = Math.PI * Math.PI
@@ -77,7 +77,7 @@ object TetraRating {
         val newR = muPrime * scale + 1500.0
         val newRD = phiPrime * scale
 
-        return Pair(newR, newRD)
+        return Triple(newR, newRD, sigmaPrime)
     }
 
 
@@ -105,7 +105,7 @@ object TetraRating {
     ): Double {
         val scale = 173.7178
         val piSquared = PI * PI
-        val epsilon = 1e-10
+        val epsilon = 1e-8
 
         // step 1: convert ratings and rd to glicko-2 scale
         val mu = (rBefore - 1500.0) / scale

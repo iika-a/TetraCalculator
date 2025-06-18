@@ -1,9 +1,9 @@
 import org.json.JSONObject
 import org.jsoup.Jsoup
 import java.awt.*
-import java.io.FileNotFoundException
-import java.net.URI
-import javax.imageio.ImageIO
+import java.awt.event.FocusEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 class DisplayPanel : JPanel(GridBagLayout()) {
@@ -11,20 +11,33 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         horizontalAlignment = JTextField.CENTER
         font = font.deriveFont(20f)
         preferredSize = Dimension(10, 35)
+        addFocusListener(object : java.awt.event.FocusAdapter() {
+            override fun focusLost(e: FocusEvent) {
+                getStats(text.lowercase())
+            }
+        })
     }
 
     private val imageLabel = JLabel().apply {
         setLabelSettings(this)
-        border = BorderFactory.createLineBorder(Color(0x313335), 3)
+        border = BorderFactory.createLineBorder(Color(0x3C3F41), 3)
         preferredSize = Dimension(250, 250)
     }
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
     private val glicko = JLabel("GLICKO±RD").apply { setLabelSettings(this) }
     private val wins = JLabel("WINS").apply { setLabelSettings(this) }
     private val sigma = JLabel("VOLATILITY").apply { setLabelSettings(this) }
+    private val player = TetraPlayer("", -1.0, -1.0, -1.0, -1, -1.0)
 
     init {
         background = Color(0x44484A)
+
+        isFocusable = true
+        addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent) {
+                requestFocusInWindow()
+            }
+        })
 
         val constraints = GridBagConstraints().apply {
             gridx = 0
@@ -44,12 +57,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
         add(sigma, constraints)
 
         nameField.addActionListener {
-            val name = nameField.text.lowercase()
-            getStats(name)
+            this.requestFocusInWindow()
         }
 
-        // do initial load
-        getStats(nameField.text.lowercase())
+        doInitialLoad()
     }
 
     private fun setLabelSettings(label: JLabel) {
@@ -61,6 +72,8 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     }
 
     private fun getStats(name: String) {
+        updateName(name)
+
         try {
             // league stats
             val leagueData = JSONObject(
@@ -70,9 +83,9 @@ class DisplayPanel : JPanel(GridBagLayout()) {
                     .body()
             ).getJSONObject("data")
 
-            tr.text = "TR: ${leagueData.getDouble("tr")}"
-            glicko.text = "Glicko: ${leagueData.getDouble("glicko")} ± ${leagueData.getDouble("rd")}"
-            wins.text = "Wins: ${leagueData.getInt("gameswon")}"
+            updateTR(leagueData.getDouble("tr"))
+            updateGlicko(leagueData.getDouble("glicko"), leagueData.getDouble("rd"))
+            updateWins(leagueData.getInt("gameswon"))
 
             val gameData = JSONObject(
                 Jsoup.connect("https://ch.tetr.io/api/users/$name/records/league/recent?limit=5")
@@ -99,9 +112,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             val player1Stats = league.getJSONArray(player1Id)
             val player2Stats = league.getJSONArray(player2Id)
 
-            val sigmaValue: Double
-
-            imageLabel.icon = getAvatar(name)
+            imageLabel.icon = TetraPlayer.getAvatar(name, 250)
 
             try {
                 val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
@@ -115,63 +126,52 @@ class DisplayPanel : JPanel(GridBagLayout()) {
                 val winnerId = if (result == "dqvictory" || result == "victory") player1Id else player2Id
                 val win = if (winnerId == player1Id) 1.0 else 0.0
 
-                sigmaValue = TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win)
-                sigma.text = "Volatility: $sigmaValue"
+                updateSigma(TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win))
             } catch(e: Exception) {
-                sigma.text = "Volatility: 0.06"
+                updateSigma(0.06)
             }
 
         } catch (e: Exception) {
-            tr.text = "TR: -1.0"
-            glicko.text = "Glicko: -1.0 ± -1.0"
-            wins.text = "Wins: -1.0"
-            sigma.text = "Volatility: -1.0"
-            imageLabel.icon = getAvatar(name)
+            updateTR(-1.0)
+            updateGlicko(-1.0, -1.0)
+            updateWins(-1)
+            updateSigma(-1.0)
+            imageLabel.icon = TetraPlayer.getAvatar(name, 250)
         }
     }
 
-    private fun getAvatar(name: String): ImageIcon {
-        try {
-            val userInfo = JSONObject(
-                Jsoup.connect("https://ch.tetr.io/api/users/$name")
-                    .ignoreContentType(true)
-                    .execute()
-                    .body()
-            ).getJSONObject("data")
-
-            val userId = userInfo.getString("_id")
-
-            val avatarUrl = try {
-                val avatarRevision = userInfo.getLong("avatar_revision")
-                if (avatarRevision == 0L) throw FileNotFoundException()
-                "https://tetr.io/user-content/avatars/$userId.jpg?v=$avatarRevision"
-            } catch (e: Exception) {
-                "https://files.catbox.moe/wjbfg5.png"
-            }
-
-            val url = URI.create(avatarUrl).toURL()
-            val connection = url.openConnection().apply {
-                setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                setRequestProperty("Referer", "https://tetr.io/")
-            }
-
-            connection.connect()
-            val image = ImageIO.read(connection.getInputStream())
-            val scaled = image.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
-            return ImageIcon(scaled)
-
-        } catch (e: Exception) {
-            val fallback = ImageIO.read(URI.create("https://files.catbox.moe/3dpdh6.png").toURL())
-            val scaled = fallback.getScaledInstance(250, 250, Image.SCALE_SMOOTH)
-            return ImageIcon(scaled)
-        }
+    private fun doInitialLoad() {
+        updateTR(-1.0)
+        updateGlicko(-1.0, -1.0)
+        updateWins(-1)
+        updateSigma(-1.0)
+        imageLabel.icon = TetraPlayer.getAvatar("", 250)
     }
 
-    fun getPlayerName() = nameField.text.lowercase()
-    @Suppress("unused")
-    fun getTR() = tr.text.substring(4).toDouble()
-    fun getGlicko() = glicko.text.substring(8).split(" ± ")[0].toDouble()
-    fun getRD() = glicko.text.substring(8).split(" ± ")[1].toDouble()
-    fun getWins() = wins.text.substring(6).toInt()
-    fun getSigma() = sigma.text.substring(12).toDouble()
+    private fun updateName(newName: String) {
+        player.name = newName
+    }
+
+    private fun updateTR(newTR: Double) {
+        player.tr = newTR
+        tr.text = "TR: $newTR"
+    }
+
+    private fun updateGlicko(newGlicko: Double, newRD: Double) {
+        player.glicko = newGlicko
+        player.rd = newRD
+        glicko.text = "Glicko: $newGlicko ± $newRD"
+    }
+
+    private fun updateWins(newWins: Int) {
+        player.wins = newWins
+        wins.text = "Wins: $newWins"
+    }
+
+    private fun updateSigma(newSigma: Double) {
+        player.sigma = newSigma
+        sigma.text = "Volatility: $newSigma"
+    }
+
+    fun getPlayer() = player
 }
