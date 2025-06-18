@@ -17,6 +17,7 @@ fun main() {
     frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
     frame.isResizable = false
     frame.setLocationRelativeTo(null)
+    TetraCalculatorHelper.setIcons(frame)
 
     val loadingFrame = JFrame("Tetra Calculator...")
     loadingFrame.setSize(250, 125)
@@ -34,6 +35,7 @@ fun main() {
     loadingFrame.isResizable = false
     loadingFrame.setLocationRelativeTo(null)
     loadingFrame.isVisible = true
+    TetraCalculatorHelper.setIcons(loadingFrame)
 
     val leftPanel = DisplayPanel()
     val rightPanel = DisplayPanel()

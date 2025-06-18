@@ -5,9 +5,20 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel): JPanel(BorderLayout()) {
-    private val calculateButton = JButton("Calculate!").apply {
+    private val calculateButton = JButton("Calculate").apply {
         font = Font("Dubai", 0, 20)
         preferredSize = Dimension(150, 35)
+        addActionListener {
+            calculate()
+        }
+    }
+    private val refreshButton = JButton("Refresh").apply {
+        font = Font("Dubai", 0, 20)
+        preferredSize = Dimension(150, 35)
+        addActionListener {
+            leftPanel.refresh()
+            rightPanel.refresh()
+        }
     }
 
     init {
@@ -19,20 +30,18 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         this.add(centerPanel, BorderLayout.CENTER)
         this.add(JPanel().apply {
             background = Color(0x44484A)
+            add(refreshButton)
             add(calculateButton)
         }, BorderLayout.SOUTH)
-        calculateButton.addActionListener {
-            calculate()
-        }
     }
 
     private fun calculate() {
         val left = leftPanel.getPlayer()
         val right = rightPanel.getPlayer()
         if (left.tr == -1.0 || right.tr == -1.0) {
-            val loadingFrame = JFrame("Tetra Calculation")
-            loadingFrame.setSize(250, 150)
-            loadingFrame.add(JPanel().apply {
+            val errorFrame = JFrame("Tetra Calculation")
+            errorFrame.setSize(250, 150)
+            errorFrame.add(JPanel().apply {
                 add(JLabel("Someone has not played!").apply {
                     font = Font("Dubai", 0, 20)
                     horizontalAlignment = JLabel.CENTER
@@ -45,18 +54,18 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
                     font = Font("Dubai", 0, 20)
                     preferredSize = Dimension(150, 35)
                     addActionListener {
-                        loadingFrame.dispose()
+                        errorFrame.dispose()
                     }
                 })
 
                 background = Color(0x44484A)
             })
 
-
-            loadingFrame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
-            loadingFrame.isResizable = false
-            loadingFrame.setLocationRelativeTo(null)
-            loadingFrame.isVisible = true
+            TetraCalculatorHelper.setIcons(errorFrame)
+            errorFrame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
+            errorFrame.isResizable = false
+            errorFrame.setLocationRelativeTo(null)
+            errorFrame.isVisible = true
 
             return
         }
@@ -83,6 +92,7 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         outputFrame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
         outputFrame.isResizable = false
         outputFrame.setLocationRelativeTo(null)
+        TetraCalculatorHelper.setIcons(outputFrame)
 
         val outputCenterPanel = JPanel(BorderLayout()).apply {
             add(JPanel(GridLayout(1, 2)).apply {
@@ -97,11 +107,14 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
                     preferredSize = Dimension(150, 35)
                     addActionListener {
                         outputFrame.dispose()
+                        leftPanel.refresh()
+                        rightPanel.refresh()
                     }
                 })
             }, BorderLayout.SOUTH)
         }
         outputFrame.add(outputCenterPanel)
         outputFrame.isVisible = true
+
     }
 }

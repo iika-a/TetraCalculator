@@ -20,7 +20,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private val imageLabel = JLabel().apply {
         setLabelSettings(this)
-        border = BorderFactory.createLineBorder(Color(0x3C3F41), 3)
+        border = BorderFactory.createLineBorder(Color(0x313335), 3)
         preferredSize = Dimension(250, 250)
     }
     private val tr = JLabel("TR").apply { setLabelSettings(this) }
@@ -154,13 +154,13 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private fun updateTR(newTR: Double) {
         player.tr = newTR
-        tr.text = "TR: $newTR"
+        tr.text = "TR: ${"%.2f".format(newTR)}"
     }
 
     private fun updateGlicko(newGlicko: Double, newRD: Double) {
         player.glicko = newGlicko
         player.rd = newRD
-        glicko.text = "Glicko: $newGlicko ± $newRD"
+        glicko.text = "Glicko: ${"%.2f".format(newGlicko)} ± ${"%.2f".format(newRD)}"
     }
 
     private fun updateWins(newWins: Int) {
@@ -170,8 +170,9 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private fun updateSigma(newSigma: Double) {
         player.sigma = newSigma
-        sigma.text = "Volatility: $newSigma"
+        sigma.text = "Volatility: ${"%.2f".format(newSigma)} ${TetraCalculatorHelper.getErrorText(newSigma, 0.06)}"
     }
 
+    fun refresh() { getStats(player.name) }
     fun getPlayer() = player
 }

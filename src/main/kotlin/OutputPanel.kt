@@ -7,12 +7,12 @@ import javax.swing.SwingConstants
 class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer): JPanel(GridBagLayout()) {
     private val nameAvatarLabel = JLabel(TetraPlayer.getAvatar(winPlayer.name, 50))
     private val nameLabel = JLabel(winPlayer.name).apply { setLabelSettings(this) }
-    private val trWinLabel = JLabel("Win TR: ${winPlayer.tr}").apply{ setLabelSettings(this) }
-    private val glickoWinLabel = JLabel("Win Glicko: ${winPlayer.glicko} ± ${winPlayer.rd}").apply{ setLabelSettings(this) }
-    private val sigmaWinLabel = JLabel("Win Volatility: ${winPlayer.sigma}").apply{ setLabelSettings(this) }
-    private val trLossLabel = JLabel("Loss TR: ${losePlayer.tr}").apply{ setLabelSettings(this) }
-    private val glickoLossLabel = JLabel("Loss Glicko: ${losePlayer.glicko} ± ${losePlayer.rd}").apply{ setLabelSettings(this) }
-    private val sigmaLossLabel = JLabel("Loss Volatility: ${losePlayer.sigma}").apply{ setLabelSettings(this) }
+    private val trWinLabel = JLabel("Win TR: ${"%.2f".format(winPlayer.tr)}").apply{ setLabelSettings(this) }
+    private val glickoWinLabel = JLabel("Win Glicko: ${"%.2f".format(winPlayer.glicko)} ± ${"%.2f".format(winPlayer.rd)}").apply{ setLabelSettings(this) }
+    private val sigmaWinLabel = JLabel("Win Volatility: ${"%.2f".format(winPlayer.sigma)} ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}").apply{ setLabelSettings(this) }
+    private val trLossLabel = JLabel("Loss TR: ${"%.2f".format(losePlayer.tr)}").apply{ setLabelSettings(this) }
+    private val glickoLossLabel = JLabel("Loss Glicko: ${"%.2f".format(losePlayer.glicko)} ± ${"%.2f".format(losePlayer.rd)}").apply{ setLabelSettings(this) }
+    private val sigmaLossLabel = JLabel("Loss Volatility: ${"%.2f".format(losePlayer.sigma)} ${TetraCalculatorHelper.getErrorText(losePlayer.sigma, 0.06)}").apply{ setLabelSettings(this) }
 
     init {
         background = Color(0x44484A)
