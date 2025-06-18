@@ -13,7 +13,7 @@ object TetraCalculatorHelper {
     private val client = OkHttpClient()
 
     fun getErrorText(value: Double, compareTo: Double): String {
-        return if (abs(value - compareTo) < 0.01)
+        return if (abs(value - compareTo) < 0.001)
             if (value < compareTo) "(Slightly Less)"
             else if (value > compareTo) "(Slightly More)"
             else ""
@@ -33,7 +33,7 @@ object TetraCalculatorHelper {
         try {
             if (name.isEmpty()) throw FileNotFoundException()
 
-            // step 1: get user info from tetrio API
+            // step 1: get user info from tetrio api
             val request = Request.Builder()
                 .url("https://ch.tetr.io/api/users/$name")
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")

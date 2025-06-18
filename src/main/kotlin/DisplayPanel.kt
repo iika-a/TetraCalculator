@@ -10,7 +10,7 @@ import javax.swing.*
 
 class DisplayPanel : JPanel(GridBagLayout()) {
     private val client = OkHttpClient()
-    private val nameField = JTextField("", 15).apply {
+    private val nameField = JTextField("", 16).apply {
         horizontalAlignment = JTextField.CENTER
         font = font.deriveFont(20f)
         preferredSize = Dimension(10, 35)

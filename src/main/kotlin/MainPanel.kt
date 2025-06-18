@@ -6,7 +6,7 @@ import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel): JPanel(BorderLayout()) {
+class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel, private val parentFrame: JFrame): JPanel(BorderLayout()) {
     private val calculateButton = JButton("Calculate").apply {
         font = Font("Dubai", 0, 20)
         preferredSize = Dimension(150, 35)
@@ -122,6 +122,8 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
             }, BorderLayout.SOUTH)
         }
         outputFrame.add(outputCenterPanel)
+
+        outputFrame.location = parentFrame.location
         outputFrame.isVisible = true
 
     }

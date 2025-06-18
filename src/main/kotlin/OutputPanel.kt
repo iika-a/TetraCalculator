@@ -1,12 +1,32 @@
 import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
+import java.net.URI
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSeparator
 import javax.swing.SwingConstants
 
 class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlayer: TetraPlayer): JPanel(GridBagLayout()) {
-    private val nameAvatarLabel = JLabel(TetraCalculatorHelper.getAvatar(winPlayer.name, 50))
-    private val nameLabel = JLabel(winPlayer.name).apply { setLabelSettings(this) }
+    private val avatarLabel = JLabel(TetraCalculatorHelper.getAvatar(winPlayer.name, 75))
+    private val nameLabel = JLabel("<html><a href='' style='color:#BBBBBB;'>${winPlayer.name}</a></html>").apply {
+        setLabelSettings(this)
+        font = font.deriveFont(30f)
+        cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+        addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent?) {
+                Desktop.getDesktop().browse(URI("https://ch.tetr.io/u/${winPlayer.name}"))
+            }
+
+            override fun mouseEntered(e: MouseEvent?) {
+                text = "<html><a href='' style='color:#AAAAAA;'>${winPlayer.name}</a></html>"
+            }
+
+            override fun mouseExited(e: MouseEvent?) {
+                text = "<html><a href='' style='color:#BBBBBB;'>${winPlayer.name}</a></html>"
+            }
+        })
+    }
     private val trWinLabel = JLabel("Win TR: ${"%.2f".format(winPlayer.tr)} (+${"%.2f".format(winPlayer.tr - originalPlayer.tr)})").apply{ setLabelSettings(this) }
     private val glickoWinLabel = JLabel("Win Glicko: ${"%.2f".format(winPlayer.glicko)} ± ${"%.2f".format(winPlayer.rd)} (+${"%.2f".format(winPlayer.glicko - originalPlayer.glicko)})").apply{ setLabelSettings(this) }
     private val sigmaWinLabel = JLabel("Win Volatility: ${"%.2f".format(winPlayer.sigma)} ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}").apply{ setLabelSettings(this) }
@@ -16,6 +36,12 @@ class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlaye
 
     init {
         background = Color(0x44484A)
+
+        addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent) {
+                requestFocusInWindow()
+            }
+        })
 
         val constraints = GridBagConstraints().apply {
             gridx = 0
@@ -28,7 +54,7 @@ class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlaye
         }
 
         this.add(JPanel().apply {
-            add(nameAvatarLabel)
+            add(avatarLabel)
             add(nameLabel)
         }, constraints)
 

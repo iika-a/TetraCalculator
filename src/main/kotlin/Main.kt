@@ -41,7 +41,7 @@ fun main() {
     val rightPanel = DisplayPanel()
     leftPanel.setBorder(BorderFactory.createEmptyBorder(10, 100, 10, 10))
     rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 100))
-    val panel = MainPanel(leftPanel, rightPanel)
+    val panel = MainPanel(leftPanel, rightPanel, frame)
     loadingFrame.dispose()
 
     frame.add(panel)
