@@ -120,8 +120,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
                 val win = if (winnerId == player1Id) 1.0 else 0.0
 
                 updateSigma(TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win))
+                TetraCalculatorHelper.inaccurate = false
             } catch(e: Exception) {
                 updateSigma(0.06)
+                TetraCalculatorHelper.inaccurate = true
             }
 
         } catch (e: Exception) {

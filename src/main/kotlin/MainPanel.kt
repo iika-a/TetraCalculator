@@ -103,6 +103,17 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         })
 
         val outputCenterPanel = JPanel(BorderLayout()).apply {
+            background = Color(0x44484A)
+
+            if (TetraCalculatorHelper.inaccurate) {
+                add(JLabel("WARNING: Results may be inaccurate!").apply {
+                    font = Font("Dubai", 0, 16)
+                    horizontalAlignment = JLabel.CENTER
+                    verticalAlignment = JLabel.CENTER
+                    foreground = Color(0xBBBBBB)
+                }, BorderLayout.NORTH)
+            }
+
             add(JPanel(GridLayout(1, 2)).apply {
                 this.add(leftOutputPanel)
                 this.add(rightOutputPanel)

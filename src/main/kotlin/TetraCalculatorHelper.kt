@@ -11,6 +11,7 @@ import kotlin.math.abs
 
 object TetraCalculatorHelper {
     private val client = OkHttpClient()
+    var inaccurate = false
 
     fun getErrorText(value: Double, compareTo: Double): String {
         return if (abs(value - compareTo) < 0.001)
