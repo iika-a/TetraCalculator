@@ -85,10 +85,10 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             updateGlicko(leagueData.getDouble("glicko"), leagueData.getDouble("rd"))
             updateWins(leagueData.getInt("gameswon"))
 
-            val gameData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/records/league/recent?limit=2")
+            val gameData = fetchTetrioJson("https://ch.tetr.io/api/users/$name/records/league/recent?limit=1")
 
             val entries = gameData.getJSONArray("entries")
-            val firstEntry = entries.getJSONObject(1)
+            val firstEntry = entries.getJSONObject(0)
 
             val leaderboard = firstEntry.getJSONObject("results").getJSONArray("leaderboard")
 
@@ -109,16 +109,20 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             imageLabel.icon = TetraCalculatorHelper.getAvatar(name, 250)
 
             try {
-                val player1before = player1Stats.getJSONObject(0).getDouble("glicko")
-                val player1rd = player1Stats.getJSONObject(0).getDouble("rd")
+                val player1Before = player1Stats.getJSONObject(0).getDouble("glicko")
+                val player1RDBefore = player1Stats.getJSONObject(0).getDouble("rd")
+                val player1After = player1Stats.getJSONObject(1).getDouble("glicko")
+                val player1RDAfter = player1Stats.getJSONObject(1).getDouble("rd")
 
-                val player2before = player2Stats.getJSONObject(0).getDouble("glicko")
-                val player2rd = player2Stats.getJSONObject(0).getDouble("rd")
+                val player2Before = player2Stats.getJSONObject(0).getDouble("glicko")
+                val player2RDBefore = player2Stats.getJSONObject(0).getDouble("rd")
+                val player2After = player2Stats.getJSONObject(1).getDouble("glicko")
+                val player2RDAfter = player2Stats.getJSONObject(1).getDouble("rd")
 
                 val win = if (player1Id == userId) 1.0 else 0.0
 
-                if (win == 1.0) updateSigma(TetraRating.estimateSigmaAfterMatch(player1before, player1rd, player2before, player2rd, win))
-                else updateSigma(TetraRating.estimateSigmaAfterMatch(player2before, player2rd, player1before, player1rd, win))
+                if (win == 1.0) {updateSigma(TetraRating.estimateSigmaAfterMatch(player1Before, player1RDBefore, player1After, player1RDAfter, player2Before, player2RDBefore, win))}
+                else {updateSigma(TetraRating.estimateSigmaAfterMatch(player2Before, player2RDBefore, player2After, player2RDAfter, player1Before, player1RDBefore, win))}
                 TetraCalculatorHelper.inaccurate = false
             } catch(e: Exception) {
                 updateSigma(0.06)
@@ -160,14 +164,14 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private fun updateTR(newTR: Double) {
         player.tr = newTR
-        tr.text = "TR: ${"%.2f".format(newTR)}"
+        tr.text = "TR: ${"%,.2f".format(newTR)}"
         tr.toolTipText = newTR.toString()
     }
 
     private fun updateGlicko(newGlicko: Double, newRD: Double) {
         player.glicko = newGlicko
         player.rd = newRD
-        glicko.text = "Glicko: ${"%.2f".format(newGlicko)} ± ${"%.2f".format(newRD)}"
+        glicko.text = "Glicko: ${"%,.2f".format(newGlicko)} ± ${"%,.2f".format(newRD)}"
         glicko.toolTipText = "$newGlicko ± $newRD"
     }
 
@@ -179,7 +183,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
     private fun updateSigma(newSigma: Double) {
         player.sigma = newSigma
-        sigma.text = "Volatility: ${TetraCalculatorHelper.getErrorText(newSigma, 0.06)}${"%.2f".format(newSigma)}"
+        sigma.text = "Volatility: ${TetraCalculatorHelper.getErrorText(newSigma, 0.06)}${"%,.2f".format(newSigma)}"
         sigma.toolTipText = newSigma.toString()
     }
 

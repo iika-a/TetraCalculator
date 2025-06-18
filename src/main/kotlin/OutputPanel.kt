@@ -26,12 +26,12 @@ class OutputPanel(winPlayer: TetraPlayer, lossPlayer: TetraPlayer, originalPlaye
             }
         })
     }
-    private val trWinLabel = JLabel("<html>TR: ${"%.2f".format(winPlayer.tr)} ${getChangeText(winPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, winPlayer.tr.toString())}
-    private val glickoWinLabel = JLabel("<html>Glicko: ${"%.2f".format(winPlayer.glicko)} ± ${"%.2f".format(winPlayer.rd)} ${getChangeText(winPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${winPlayer.glicko} ± ${winPlayer.rd}") }
-    private val sigmaWinLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}${"%.2f".format(winPlayer.sigma)}").apply{ setLabelSettings(this, winPlayer.sigma.toString()) }
-    private val trLossLabel = JLabel("<html>TR: ${"%.2f".format(lossPlayer.tr)} ${getChangeText(lossPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, lossPlayer.tr.toString()) }
-    private val glickoLossLabel = JLabel("<html>Glicko: ${"%.2f".format(lossPlayer.glicko)} ± ${"%.2f".format(lossPlayer.rd)} ${getChangeText(lossPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${lossPlayer.glicko} ± ${lossPlayer.rd}") }
-    private val sigmaLossLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(lossPlayer.sigma, 0.06)}${"%.2f".format(lossPlayer.sigma)}").apply{ setLabelSettings(this, lossPlayer.sigma.toString()) }
+    private val trWinLabel = JLabel("<html>TR: ${"%,.2f".format(winPlayer.tr)} ${getChangeText(winPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, winPlayer.tr.toString())}
+    private val glickoWinLabel = JLabel("<html>Glicko: ${"%,.2f".format(winPlayer.glicko)} ± ${"%,.2f".format(winPlayer.rd)} ${getChangeText(winPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${winPlayer.glicko} ± ${winPlayer.rd}") }
+    private val sigmaWinLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}${"%,.2f".format(winPlayer.sigma)}").apply{ setLabelSettings(this, winPlayer.sigma.toString()) }
+    private val trLossLabel = JLabel("<html>TR: ${"%,.2f".format(lossPlayer.tr)} ${getChangeText(lossPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, lossPlayer.tr.toString()) }
+    private val glickoLossLabel = JLabel("<html>Glicko: ${"%,.2f".format(lossPlayer.glicko)} ± ${"%,.2f".format(lossPlayer.rd)} ${getChangeText(lossPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${lossPlayer.glicko} ± ${lossPlayer.rd}") }
+    private val sigmaLossLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(lossPlayer.sigma, 0.06)}${"%,.2f".format(lossPlayer.sigma)}").apply{ setLabelSettings(this, lossPlayer.sigma.toString()) }
 
     init {
         background = Color(0x44484A)

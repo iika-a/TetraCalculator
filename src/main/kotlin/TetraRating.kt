@@ -98,6 +98,8 @@ object TetraRating {
     fun estimateSigmaAfterMatch(
         rBefore: Double,
         rdBefore: Double,
+        rAfter: Double,
+        rdAfter: Double,
         rOp: Double,
         rdOp: Double,
         result: Double,
@@ -127,7 +129,7 @@ object TetraRating {
         val delta = v * gPhi * (result - eval)
 
         // step 6: iterative algorithm
-        val a = ln(0.06 * 0.06)
+        val a = ln(solveSigmaFromMatch(rBefore, rdBefore, rAfter, rdAfter, rOp, rdOp, result) * solveSigmaFromMatch(rBefore, rdBefore, rAfter, rdAfter, rOp, rdOp, result))
         var m = a
         var b = if (delta * delta > phi * phi + v) ln(delta * delta - phi * phi - v) else a - 1
         var fA = f(m, delta, phi, v, a, tau)
@@ -157,6 +159,56 @@ object TetraRating {
         val numerator = ex * (delta * delta - phi * phi - v - ex)
         val denominator = 2.0 * (phi * phi + v + ex).pow(2.0)
         return numerator / denominator - (x - a) / (tau * tau)
+    }
+
+    fun solveSigmaFromMatch(
+        rBefore: Double,
+        rdBefore: Double,
+        rAfter: Double,
+        rdAfter: Double,
+        rOp: Double,
+        rdOp: Double,
+        result: Double,
+    ): Double {
+        val scale = 173.7178
+        val piSquared = Math.PI * Math.PI
+        val epsilon = 1e-8
+
+        val mu = (rBefore - 1500.0) / scale
+        val muAfter = (rAfter - 1500.0) / scale
+        val phi = rdBefore / scale
+        val phiAfter = rdAfter / scale
+        val muOp = (rOp - 1500.0) / scale
+        val phiOp = rdOp / scale
+
+        fun g(phi: Double): Double = 1.0 / sqrt(1.0 + 3.0 * phi * phi / piSquared)
+        fun e(mu: Double, muJ: Double, phiJ: Double): Double = 1.0 / (1.0 + exp(-g(phiJ) * (mu - muJ)))
+
+        val gPhi = g(phiOp)
+        val E = e(mu, muOp, phiOp)
+        val v = 1.0 / (gPhi * gPhi * E * (1.0 - E))
+
+        fun objective(sigma: Double): Double {
+            val phiStarSq = phi * phi + sigma * sigma
+            val phiPrime = 1.0 / sqrt(1.0 / phiStarSq + 1.0 / v)
+            val muPrime = mu + phiPrime * phiPrime * gPhi * (result - E)
+            return (muPrime - muAfter).pow(2) + (phiPrime - phiAfter).pow(2)  // total error to minimize
+        }
+
+        var low = 0.0001
+        var high = 1.0
+        while (high - low > epsilon) {
+            val mid1 = low + (high - low) / 3.0
+            val mid2 = high - (high - low) / 3.0
+            val f1 = objective(mid1)
+            val f2 = objective(mid2)
+            if (f1 < f2) {
+                high = mid2
+            } else {
+                low = mid1
+            }
+        }
+        return (low + high) / 2.0
     }
 
     private infix fun Double.powTo(exponent: Double): Double = pow(exponent)
