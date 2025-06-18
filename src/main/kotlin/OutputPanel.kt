@@ -4,13 +4,12 @@ import java.awt.event.MouseEvent
 import java.net.URI
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.JSeparator
-import javax.swing.SwingConstants
+import javax.swing.border.TitledBorder
 
-class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlayer: TetraPlayer): JPanel(GridBagLayout()) {
+class OutputPanel(winPlayer: TetraPlayer, lossPlayer: TetraPlayer, originalPlayer: TetraPlayer): JPanel(GridBagLayout()) {
     private val avatarLabel = JLabel(TetraCalculatorHelper.getAvatar(winPlayer.name, 75))
-    private val nameLabel = JLabel("<html><a href='' style='color:#BBBBBB;'>${winPlayer.name}</a></html>").apply {
-        setLabelSettings(this)
+    private val nameLabel = JLabel("<html><a href='' style='color:#BBBBBB; text-decoration:none;'>${winPlayer.name}</a></html>").apply {
+        setLabelSettings(this, "")
         font = font.deriveFont(30f)
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
         addMouseListener(object : MouseAdapter() {
@@ -19,20 +18,20 @@ class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlaye
             }
 
             override fun mouseEntered(e: MouseEvent?) {
-                text = "<html><a href='' style='color:#AAAAAA;'>${winPlayer.name}</a></html>"
+                text = "<html><a href='' style='color:#999999; text-decoration:none;'>${winPlayer.name}</a></html>"
             }
 
             override fun mouseExited(e: MouseEvent?) {
-                text = "<html><a href='' style='color:#BBBBBB;'>${winPlayer.name}</a></html>"
+                text = "<html><a href='' style='color:#BBBBBB; text-decoration:none;'>${winPlayer.name}</a></html>"
             }
         })
     }
-    private val trWinLabel = JLabel("Win TR: ${"%.2f".format(winPlayer.tr)} (+${"%.2f".format(winPlayer.tr - originalPlayer.tr)})").apply{ setLabelSettings(this) }
-    private val glickoWinLabel = JLabel("Win Glicko: ${"%.2f".format(winPlayer.glicko)} ± ${"%.2f".format(winPlayer.rd)} (+${"%.2f".format(winPlayer.glicko - originalPlayer.glicko)})").apply{ setLabelSettings(this) }
-    private val sigmaWinLabel = JLabel("Win Volatility: ${"%.2f".format(winPlayer.sigma)} ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}").apply{ setLabelSettings(this) }
-    private val trLossLabel = JLabel("Loss TR: ${"%.2f".format(losePlayer.tr)} (-${"%.2f".format(originalPlayer.tr - losePlayer.tr)})").apply{ setLabelSettings(this) }
-    private val glickoLossLabel = JLabel("Loss Glicko: ${"%.2f".format(losePlayer.glicko)} ± ${"%.2f".format(losePlayer.rd)} (-${"%.2f".format(originalPlayer.glicko - losePlayer.glicko)})").apply{ setLabelSettings(this) }
-    private val sigmaLossLabel = JLabel("Loss Volatility: ${"%.2f".format(losePlayer.sigma)} ${TetraCalculatorHelper.getErrorText(losePlayer.sigma, 0.06)}").apply{ setLabelSettings(this) }
+    private val trWinLabel = JLabel("<html>TR: ${"%.2f".format(winPlayer.tr)} ${getChangeText(winPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, winPlayer.tr.toString())}
+    private val glickoWinLabel = JLabel("<html>Glicko: ${"%.2f".format(winPlayer.glicko)} ± ${"%.2f".format(winPlayer.rd)} ${getChangeText(winPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${winPlayer.glicko} ± ${winPlayer.rd}") }
+    private val sigmaWinLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(winPlayer.sigma, 0.06)}${"%.2f".format(winPlayer.sigma)}").apply{ setLabelSettings(this, winPlayer.sigma.toString()) }
+    private val trLossLabel = JLabel("<html>TR: ${"%.2f".format(lossPlayer.tr)} ${getChangeText(lossPlayer.tr, originalPlayer.tr)}</html>").apply{ setLabelSettings(this, lossPlayer.tr.toString()) }
+    private val glickoLossLabel = JLabel("<html>Glicko: ${"%.2f".format(lossPlayer.glicko)} ± ${"%.2f".format(lossPlayer.rd)} ${getChangeText(lossPlayer.glicko, originalPlayer.glicko)}</html>").apply{ setLabelSettings(this, "${lossPlayer.glicko} ± ${lossPlayer.rd}") }
+    private val sigmaLossLabel = JLabel("Volatility: ${TetraCalculatorHelper.getErrorText(lossPlayer.sigma, 0.06)}${"%.2f".format(lossPlayer.sigma)}").apply{ setLabelSettings(this, lossPlayer.sigma.toString()) }
 
     init {
         background = Color(0x44484A)
@@ -58,25 +57,53 @@ class OutputPanel(winPlayer: TetraPlayer, losePlayer: TetraPlayer, originalPlaye
             add(nameLabel)
         }, constraints)
 
-        this.add(trWinLabel, constraints)
-        this.add(glickoWinLabel, constraints)
-        this.add(sigmaWinLabel, constraints)
-        this.add(JSeparator(SwingConstants.HORIZONTAL).apply {
-            preferredSize = Dimension(550, 5)
-            foreground = Color(0xBBBBBB)
-            background = foreground
-        }, constraints)
+        val winPanel = JPanel(GridBagLayout()).apply {
+            background = Color(0x44484A)
+            border = TitledBorder("Win Stats").apply {
+                titleFont = Font("Dubai", 0, 18)
+            }
+            add(trWinLabel, constraints)
+            add(glickoWinLabel, constraints)
+            add(sigmaWinLabel, constraints)
+        }
 
-        this.add(trLossLabel, constraints)
-        this.add(glickoLossLabel, constraints)
-        this.add(sigmaLossLabel, constraints)
+        val lossPanel = JPanel(GridBagLayout()).apply {
+            background = Color(0x44484A)
+            border = TitledBorder("Loss Stats").apply {
+                titleFont = Font("Dubai", 0, 18)
+            }
+            add(trLossLabel)
+            add(glickoLossLabel, constraints)
+            add(sigmaLossLabel, constraints)
+        }
+
+        this.add(winPanel, constraints)
+        this.add(lossPanel, constraints)
     }
 
-    private fun setLabelSettings(label: JLabel) {
+    private fun getChangeText(value1: Double, value2: Double): String {
+        val difference = value1 - value2
+        val sign: String
+        val color: String
+        if (difference > 0) {
+            sign = "+"
+            color = "B2FBA5"
+        } else {
+            sign = ""
+            color = "FF746C"
+        }
+
+        val text = "<a href='' style='color:#$color; text-decoration:none;'>($sign${"%.2f".format(difference)})</a>"
+        return text
+    }
+
+    private fun setLabelSettings(label: JLabel, toolTip: String) {
         label.font = Font("Dubai", 0, 20)
         label.horizontalAlignment = JLabel.CENTER
         label.verticalAlignment = JLabel.CENTER
         label.foreground = Color(0xBBBBBB)
         label.preferredSize = Dimension(500, 25)
+        if (toolTip.isEmpty()) return
+        else label.toolTipText = toolTip
     }
 }

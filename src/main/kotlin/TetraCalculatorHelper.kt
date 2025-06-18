@@ -14,8 +14,8 @@ object TetraCalculatorHelper {
 
     fun getErrorText(value: Double, compareTo: Double): String {
         return if (abs(value - compareTo) < 0.001)
-            if (value < compareTo) "(Slightly Less)"
-            else if (value > compareTo) "(Slightly More)"
+            if (value < compareTo) "Slightly less than "
+            else if (value > compareTo) "Slightly more than "
             else ""
         else ""
     }

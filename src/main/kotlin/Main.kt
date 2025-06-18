@@ -22,6 +22,8 @@ fun main() {
     val loadingFrame = JFrame("Tetra Calculator...")
     loadingFrame.setSize(250, 125)
     loadingFrame.add(JPanel().apply {
+        background = Color(0x44484A)
+
         add(JLabel("Loading...").apply {
             font = Font("Dubai", 0, 20)
             horizontalAlignment = JLabel.CENTER
@@ -29,7 +31,6 @@ fun main() {
             foreground = Color(0xBBBBBB)
             preferredSize = Dimension(300, 75)
         })
-        background = Color(0x44484A)
     })
     loadingFrame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
     loadingFrame.isResizable = false

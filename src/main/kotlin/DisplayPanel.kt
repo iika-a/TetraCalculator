@@ -125,7 +125,6 @@ class DisplayPanel : JPanel(GridBagLayout()) {
             }
 
         } catch (e: Exception) {
-            e.printStackTrace()
             updateTR(-1.0)
             updateGlicko(-1.0, -1.0)
             updateWins(-1)
@@ -161,22 +160,26 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private fun updateTR(newTR: Double) {
         player.tr = newTR
         tr.text = "TR: ${"%.2f".format(newTR)}"
+        tr.toolTipText = newTR.toString()
     }
 
     private fun updateGlicko(newGlicko: Double, newRD: Double) {
         player.glicko = newGlicko
         player.rd = newRD
         glicko.text = "Glicko: ${"%.2f".format(newGlicko)} ± ${"%.2f".format(newRD)}"
+        glicko.toolTipText = "$newGlicko ± $newRD"
     }
 
     private fun updateWins(newWins: Int) {
         player.wins = newWins
         wins.text = "Wins: $newWins"
+        wins.toolTipText = "$newWins Wins"
     }
 
     private fun updateSigma(newSigma: Double) {
         player.sigma = newSigma
-        sigma.text = "Volatility: ${"%.2f".format(newSigma)} ${TetraCalculatorHelper.getErrorText(newSigma, 0.06)}"
+        sigma.text = "Volatility: ${TetraCalculatorHelper.getErrorText(newSigma, 0.06)}${"%.2f".format(newSigma)}"
+        sigma.toolTipText = newSigma.toString()
     }
 
     fun refresh() { getStats(player.name) }
