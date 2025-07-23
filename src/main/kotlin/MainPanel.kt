@@ -5,6 +5,7 @@ import javax.swing.JButton
 import javax.swing.JFrame
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.math.sqrt
 
 class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: DisplayPanel, private val parentFrame: JFrame): JPanel(BorderLayout()) {
     private val calculateButton = JButton("Calculate").apply {
@@ -18,6 +19,7 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         font = Font("Dubai", 0, 20)
         preferredSize = Dimension(150, 35)
         addActionListener {
+            TetraCalculatorHelper.inaccurate = false
             leftPanel.refresh()
             rightPanel.refresh()
         }
@@ -72,19 +74,29 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
             return
         }
 
+        val leftFactor = when(left.anomaly) {
+            1 -> sqrt(2/3.0)
+            2 -> sqrt(5/6.0)
+            else -> 1.0
+        }
         val leftStatsIfWin = TetraRating.glicko2Update(left.glicko, left.rd, right.glicko, right.rd, 1.0, left.sigma)
         val leftStatsIfLoss = TetraRating.glicko2Update(left.glicko, left.rd, right.glicko, right.rd, 0.0, left.sigma)
-        val leftTRIfWin = TetraRating.calculateTR(leftStatsIfWin.first, leftStatsIfWin.second, left.wins + 1)
-        val leftTRIfLoss = TetraRating.calculateTR(leftStatsIfLoss.first, leftStatsIfLoss.second, left.wins)
-        val leftPlayerIfWin = TetraPlayer(left.name, leftTRIfWin, leftStatsIfWin.first, leftStatsIfWin.second, left.wins + 1, leftStatsIfWin.third)
-        val leftPlayerIfLoss = TetraPlayer(left.name, leftTRIfLoss, leftStatsIfLoss.first, leftStatsIfLoss.second, left.wins, leftStatsIfLoss.third)
+        val leftTRIfWin = TetraRating.calculateTR(leftStatsIfWin.first, leftStatsIfWin.second * leftFactor, left.wins + 1)
+        val leftTRIfLoss = TetraRating.calculateTR(leftStatsIfLoss.first, leftStatsIfLoss.second * leftFactor, left.wins)
+        val leftPlayerIfWin = TetraPlayer(left.name, leftTRIfWin, leftStatsIfWin.first, leftStatsIfWin.second * leftFactor, left.wins + 1, leftStatsIfWin.third, left.anomaly)
+        val leftPlayerIfLoss = TetraPlayer(left.name, leftTRIfLoss, leftStatsIfLoss.first, leftStatsIfLoss.second * leftFactor, left.wins, leftStatsIfLoss.third, left.anomaly)
 
+        val rightFactor = when(left.anomaly) {
+            1 -> sqrt(2/3.0)
+            2 -> sqrt(5/6.0)
+            else -> 1.0
+        }
         val rightStatsIfWin = TetraRating.glicko2Update(right.glicko, right.rd, left.glicko, left.rd, 1.0, right.sigma)
         val rightStatsIfLoss = TetraRating.glicko2Update(right.glicko, right.rd, left.glicko, left.rd, 0.0, right.sigma)
-        val rightTRIfWin = TetraRating.calculateTR(rightStatsIfWin.first, rightStatsIfWin.second, right.wins + 1)
-        val rightTRIfLoss = TetraRating.calculateTR(rightStatsIfLoss.first, rightStatsIfLoss.second, right.wins)
-        val rightPlayerIfWin = TetraPlayer(right.name, rightTRIfWin, rightStatsIfWin.first, rightStatsIfWin.second, right.wins + 1, rightStatsIfWin.third)
-        val rightPlayerIfLoss = TetraPlayer(right.name, rightTRIfLoss, rightStatsIfLoss.first, rightStatsIfLoss.second, right.wins, rightStatsIfLoss.third)
+        val rightTRIfWin = TetraRating.calculateTR(rightStatsIfWin.first, rightStatsIfWin.second * rightFactor, right.wins + 1)
+        val rightTRIfLoss = TetraRating.calculateTR(rightStatsIfLoss.first, rightStatsIfLoss.second * rightFactor, right.wins)
+        val rightPlayerIfWin = TetraPlayer(right.name, rightTRIfWin, rightStatsIfWin.first, rightStatsIfWin.second * rightFactor, right.wins + 1, rightStatsIfWin.third, right.anomaly)
+        val rightPlayerIfLoss = TetraPlayer(right.name, rightTRIfLoss, rightStatsIfLoss.first, rightStatsIfLoss.second * rightFactor, right.wins, rightStatsIfLoss.third, right.anomaly)
 
         val leftOutputPanel = OutputPanel(leftPlayerIfWin, leftPlayerIfLoss, left)
         val rightOutputPanel = OutputPanel(rightPlayerIfWin, rightPlayerIfLoss, right)
@@ -97,6 +109,7 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
         TetraCalculatorHelper.setIcons(outputFrame)
         outputFrame.addWindowListener(object : WindowAdapter() {
             override fun windowClosing(e: WindowEvent?) {
+                TetraCalculatorHelper.inaccurate = false
                 leftPanel.refresh()
                 rightPanel.refresh()
             }
@@ -106,7 +119,7 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
             background = Color(0x44484A)
 
             if (TetraCalculatorHelper.inaccurate) {
-                add(JLabel("WARNING: Results may be inaccurate!").apply {
+                add(JLabel("WARNING: Anomalous player(s) detected, results may be inaccurate!").apply {
                     font = Font("Dubai", 0, 16)
                     horizontalAlignment = JLabel.CENTER
                     verticalAlignment = JLabel.CENTER
@@ -128,6 +141,7 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
                         leftPanel.refresh()
                         rightPanel.refresh()
                         outputFrame.dispose()
+                        TetraCalculatorHelper.inaccurate = false
                     }
                 })
             }, BorderLayout.SOUTH)
@@ -136,6 +150,5 @@ class MainPanel(private val leftPanel: DisplayPanel, private val rightPanel: Dis
 
         outputFrame.location = parentFrame.location
         outputFrame.isVisible = true
-
     }
 }

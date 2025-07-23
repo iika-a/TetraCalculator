@@ -1,1 +1,1 @@
-data class TetraPlayer(var name: String, var tr: Double, var glicko: Double, var rd: Double, var wins: Int, var sigma: Double)
+data class TetraPlayer(var name: String, var tr: Double, var glicko: Double, var rd: Double, var wins: Int, var sigma: Double, var anomaly: Int)

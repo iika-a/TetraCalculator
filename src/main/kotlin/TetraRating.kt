@@ -8,7 +8,7 @@ object TetraRating {
         rOp: Double,     // opponent rating
         rdOp: Double,    // opponent RD
         result: Double,   // 1.0 = win, 0.5 = draw, 0.0 = loss
-        sigma: Double
+        sigma: Double,
     ): Triple<Double, Double, Double> {
         val scale = 173.7178
         val tau = 0.5
@@ -77,11 +77,14 @@ object TetraRating {
         val newR = muPrime * scale + 1500.0
         val newRD = phiPrime * scale
 
+        if (0.260 < sigma && sigma <= 0.278) TetraCalculatorHelper.inaccurate = true
+
         return Triple(newR, newRD, sigmaPrime)
     }
 
 
     fun calculateTR(glicko: Double, rd: Double, wins: Int): Double {
+
         val f = min(1.0, 0.5 + 0.5 * (wins / 18.0))
         val d = 1 + (60 - rd) / 1500.0
         val b = 1.56
@@ -95,120 +98,58 @@ object TetraRating {
         return part1 + part2
     }
 
-    fun estimateSigmaAfterMatch(
+    fun estimateSigmaAndLastAnomaly(
         rBefore: Double,
         rdBefore: Double,
         rAfter: Double,
         rdAfter: Double,
         rOp: Double,
         rdOp: Double,
-        result: Double,
-        tau: Double = 0.5
-    ): Double {
-        val scale = 173.7178
-        val piSquared = PI * PI
-        val epsilon = 1e-8
-
-        // step 1: convert ratings and rd to glicko-2 scale
-        val mu = (rBefore - 1500.0) / scale
-        val phi = rdBefore / scale
-        val muOp = (rOp - 1500.0) / scale
-        val phiOp = rdOp / scale
-
-        // step 3: g(phi) and e(mu, mu_j, phi_j)
-        fun g(phi: Double): Double = 1.0 / sqrt(1.0 + (3.0 * phi * phi) / piSquared)
-        fun e(mu: Double, muJ: Double, phiJ: Double): Double = 1.0 / (1.0 + exp(-g(phiJ) * (mu - muJ)))
-
-        val gPhi = g(phiOp)
-        val eval = e(mu, muOp, phiOp)
-
-        // step 4: estimated variance
-        val v = 1.0 / (gPhi * gPhi * eval * (1.0 - eval))
-
-        // step 5: delta
-        val delta = v * gPhi * (result - eval)
-
-        // step 6: iterative algorithm
-        val a = ln(solveSigmaFromMatch(rBefore, rdBefore, rAfter, rdAfter, rOp, rdOp, result) * solveSigmaFromMatch(rBefore, rdBefore, rAfter, rdAfter, rOp, rdOp, result))
-        var m = a
-        var b = if (delta * delta > phi * phi + v) ln(delta * delta - phi * phi - v) else a - 1
-        var fA = f(m, delta, phi, v, a, tau)
-        var fB = f(b, delta, phi, v, a, tau)
-
-        while (abs(b - m) > epsilon) {
-            val c = m + (m - b) * fA / (fB - fA)
-            val fC = f(c, delta, phi, v, a, tau)
-
-            if (fC * fB < 0) {
-                m = b
-                fA = fB
-            } else {
-                fA /= 2
-            }
-
-            b = c
-            fB = fC
+        result: Double
+    ): Pair<Double, Int> {
+        fun loss(sigma: Double): Double {
+            val (glickoGuess, _) = glicko2Update(rBefore, rdBefore, rOp, rdOp, result, sigma)
+            val ratingDiff = abs(glickoGuess - rAfter)
+            return ratingDiff
         }
 
-        return exp(m / 2.0)
-    }
+        val invGr = 2/(sqrt(5.0) + 1)
 
-    // helper function for iterative sigma solve
-    private fun f(x: Double, delta: Double, phi: Double, v: Double, a: Double, tau: Double): Double {
-        val ex = exp(x)
-        val numerator = ex * (delta * delta - phi * phi - v - ex)
-        val denominator = 2.0 * (phi * phi + v + ex).pow(2.0)
-        return numerator / denominator - (x - a) / (tau * tau)
-    }
-
-    fun solveSigmaFromMatch(
-        rBefore: Double,
-        rdBefore: Double,
-        rAfter: Double,
-        rdAfter: Double,
-        rOp: Double,
-        rdOp: Double,
-        result: Double,
-    ): Double {
-        val scale = 173.7178
-        val piSquared = Math.PI * Math.PI
-        val epsilon = 1e-8
-
-        val mu = (rBefore - 1500.0) / scale
-        val muAfter = (rAfter - 1500.0) / scale
-        val phi = rdBefore / scale
-        val phiAfter = rdAfter / scale
-        val muOp = (rOp - 1500.0) / scale
-        val phiOp = rdOp / scale
-
-        fun g(phi: Double): Double = 1.0 / sqrt(1.0 + 3.0 * phi * phi / piSquared)
-        fun e(mu: Double, muJ: Double, phiJ: Double): Double = 1.0 / (1.0 + exp(-g(phiJ) * (mu - muJ)))
-
-        val gPhi = g(phiOp)
-        val E = e(mu, muOp, phiOp)
-        val v = 1.0 / (gPhi * gPhi * E * (1.0 - E))
-
-        fun objective(sigma: Double): Double {
-            val phiStarSq = phi * phi + sigma * sigma
-            val phiPrime = 1.0 / sqrt(1.0 / phiStarSq + 1.0 / v)
-            val muPrime = mu + phiPrime * phiPrime * gPhi * (result - E)
-            return (muPrime - muAfter).pow(2) + (phiPrime - phiAfter).pow(2)  // total error to minimize
-        }
-
-        var low = 0.0001
+        var low = 0.000001
         var high = 1.0
+        val epsilon = 1e-12
+
+        var x1 = high - (high - low) * invGr
+        var x2 = low + (high - low) * invGr
+        var f1 = loss(x1)
+        var f2 = loss(x2)
+
         while (high - low > epsilon) {
-            val mid1 = low + (high - low) / 3.0
-            val mid2 = high - (high - low) / 3.0
-            val f1 = objective(mid1)
-            val f2 = objective(mid2)
             if (f1 < f2) {
-                high = mid2
+                high = x2
+                x2 = x1
+                f2 = f1
+                x1 = high - (high - low) * invGr
+                f1 = loss(x1)
             } else {
-                low = mid1
+                low = x1
+                x1 = x2
+                f1 = f2
+                x2 = low + (high - low) * invGr
+                f2 = loss(x2)
             }
         }
-        return (low + high) / 2.0
+
+        val guess = glicko2Update(rBefore, rdBefore, rOp, rdOp, result, (low + high) / 2.0)
+        val (_, _, currentSigma) = glicko2Update(rBefore, rdBefore, rOp, rdOp, result, (low + high) / 2.0)
+
+        val anomaly = if (abs(0.06 - currentSigma) > 0.002) {
+            if (abs(sqrt(2/3.0) - rdAfter/guess.second) < 0.001) 1
+            else if (abs(sqrt(5/6.0) - rdAfter/guess.second) < 0.001) 2
+            else 0
+        } else 0
+        println(anomaly)
+        return Pair(currentSigma, anomaly)
     }
 
     private infix fun Double.powTo(exponent: Double): Double = pow(exponent)

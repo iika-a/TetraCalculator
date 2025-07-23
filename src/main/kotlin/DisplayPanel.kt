@@ -30,7 +30,7 @@ class DisplayPanel : JPanel(GridBagLayout()) {
     private val glicko = JLabel("GLICKO±RD").apply { setLabelSettings(this) }
     private val wins = JLabel("WINS").apply { setLabelSettings(this) }
     private val sigma = JLabel("VOLATILITY").apply { setLabelSettings(this) }
-    private val player = TetraPlayer("", -1.0, -1.0, -1.0, -1, -1.0)
+    private val player = TetraPlayer("", -1.0, -1.0, -1.0, -1, -1.0, -1)
 
     init {
         background = Color(0x44484A)
@@ -121,9 +121,18 @@ class DisplayPanel : JPanel(GridBagLayout()) {
 
                 val win = if (player1Id == userId) 1.0 else 0.0
 
-                if (win == 1.0) {updateSigma(TetraRating.estimateSigmaAfterMatch(player1Before, player1RDBefore, player1After, player1RDAfter, player2Before, player2RDBefore, win))}
-                else {updateSigma(TetraRating.estimateSigmaAfterMatch(player2Before, player2RDBefore, player2After, player2RDAfter, player1Before, player1RDBefore, win))}
-                TetraCalculatorHelper.inaccurate = false
+                if (win == 1.0) {
+                    val (sigma, anomaly) = TetraRating.estimateSigmaAndLastAnomaly(player1Before, player1RDBefore, player1After, player1RDAfter, player2Before, player2RDBefore, win)
+                    updateSigma(sigma)
+                    player.anomaly = anomaly
+                }
+                else {
+                    val (sigma, anomaly) = TetraRating.estimateSigmaAndLastAnomaly(player2Before, player2RDBefore, player2After, player2RDAfter, player1Before, player1RDBefore, win)
+                    updateSigma(sigma)
+                    player.anomaly = anomaly
+                }
+
+                if (player.anomaly != 0) TetraCalculatorHelper.inaccurate = true
             } catch(e: Exception) {
                 updateSigma(0.06)
                 TetraCalculatorHelper.inaccurate = true
